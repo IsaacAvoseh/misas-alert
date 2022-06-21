@@ -32,7 +32,7 @@
                         </audio>
                         <form>
                             <select required id="user" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example">
-                                <option value='{"id": "user"}'  >Select User</option>
+                                <option value='{"id": "user"}'>Select User</option>
                                 @forelse($users as $user)
                                 <option value='{"id":{{$user->id}}, "location": {{ $user->location }}, "role": {{ $user->role }} }'> {{ $user->username }} </option>
                                 @empty
@@ -73,7 +73,7 @@
             let user = JSON.parse(document.getElementById('user').value);
             console.log('user json', user);
 
-            if (user.id =='user') {
+            if (user.id == 'user') {
                 toastr.warning('Please select a user');
                 return;
             }
@@ -98,6 +98,25 @@
         $(function() {
             $('#loader').hide();
             $("#btn").hide();
+
+            //ask for permission to use windows Notifications
+            if (Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+
+
+
+            //if permission is denied, show a message to the user
+            if (Notification.permission === "denied") {
+                toastr.error("Notifications are blocked");
+                Notification.requestPermission();
+            }
+
+            //if permission is not granted ask for permission
+            if (Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+
 
 
             var intervalId = window.setInterval(function() {
@@ -124,10 +143,18 @@
                             if (data.patients > newPatient?.patients || newPatient == null) {
                                 localStorage.setItem('patient', JSON.stringify(data));
                                 if (user == data.user_id) {
-                                    $('#btn1').trigger('click');
-                                    toastr.success(
-                                        'A New Patient on your queue'); // success message popup notification
-                                    console.log('response');
+                                    //if permission is granted, create a notification
+                                    if (Notification.permission === "granted") {
+                                        var notification = new Notification('MISAS ALERT', {
+                                            icon: 'https://misas.avonmedical.com/assets/img/avon.png',
+                                            body: 'A New Patient on your queue',
+                                        });
+                                    } else {
+                                        $('#btn1').trigger('click');
+                                        toastr.success(
+                                            'A New Patient on your queue'); // success message popup notification
+                                        console.log('response');
+                                    }
                                 }
                             }
 
@@ -136,7 +163,6 @@
                             console.log('data error', data);
                         }
                     });
-
 
 
                     //new message
@@ -153,6 +179,7 @@
                             if (data.message > newMessage?.message || newMessage == null) {
                                 localStorage.setItem('message', JSON.stringify(data));
                                 if (user == data.user_id) {
+                                    
                                     $('#btn1').trigger('click');
                                     toastr.success(
                                         'You have new message'); // success message popup notification
